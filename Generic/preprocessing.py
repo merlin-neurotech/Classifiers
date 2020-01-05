@@ -133,8 +133,8 @@ def epoch_and_label(data, sampling_rate, timestamps, window_size, inter_window_i
         data: array of timeseries EEG data of shape [n_samples, n_channels]
         timestamps: an array of floats containing the timestamps for each event (units must match sampling_rate).
         sampling_rate(float): the sampling rate of the EEG data.
-        window_size(int): desired size of each window in units of time (matches sampling_rate)
-        inter_window_interval(int): interval between each window in units of time (measured start to start; matches sampling_rate)
+        window_size(float): desired size of each window in units of time (matches sampling_rate)
+        inter_window_interval(float): interval between each window in units of time (measured start to start; matches sampling_rate)
         label_method(str): method of consolidating labels contained in window into a single label:
             "containment": whether a positive label is contained in the window,
             "count": the count of positive labels in the window,
