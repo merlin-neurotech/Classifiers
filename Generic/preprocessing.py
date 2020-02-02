@@ -68,10 +68,11 @@ def label_epochs(labels, window_size, inter_window_interval, label_method):
         labels: an integer array indicating a class for each sample measurement
         window_size(int): size of each window in number of samples (matches window_size in EEG data)
         inter_window_interval(int): interval between each window in number of samples (matches inter_window_interval in EEG data)
-        label_method(str): method of consolidating labels contained in epoch into a single label:
+        label_method(str/func): method of consolidating labels contained in epoch into a single label:
             "containment": whether a positive label is contained in the epoch,
             "count": the count of positive labels in the epoch,
             "mode": the most common label in the epoch
+            func: simply pass in the custome function you'd like to determine an epoch's label: func_name(epoched_labels)
     
     Returns:
         a numpy array with a label correponding to each epoch
@@ -93,6 +94,9 @@ def label_epochs(labels, window_size, inter_window_interval, label_method):
     elif label_method == "mode":
         #choose the most common label occurence in the epoch and default to the smallest if multiple exist
         epoch_labels = [stats.mode(epoch)[0][0] for epoch in epochs]
+    
+    elif callable(label_method):
+        epoch_labels = [label_method(epoch) for epoch in epochs]
 
 
     return np.array(epoch_labels)
