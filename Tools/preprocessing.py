@@ -46,6 +46,24 @@ def get_corrupt(data):
   return corrupt
 
 
+def get_corrupt_indeces(label_file):
+    """
+    interpolates from start-end timestamps to obtain an array of every index
+    which corresponds to a corrupted instance
+
+    Arguments:
+            label_file: csv filename for labels for a single subject
+    """
+  filledin = np.array([])
+  bad = get_corrupt(label_file)
+  for i in range(len(bad)):
+    start = m.floor(bad[i][0]*250)
+    stop = m.floor(bad[i][1]*250)
+    elong = (np.linspace(start, stop, stop-start))
+    filledin = np.concatenate((filledin, elong))
+  return filledin.astype(int)
+
+
 def epoch(signal, window_size, inter_window_interval):
     """
     Creates overlapping windows/epochs of EEG data from a single recording.
@@ -216,10 +234,10 @@ def lbl_wo_corrupt(label_file, timestamps, sr, length, window_size, window_step)
         window_size: number of data points in training input elements
         window_step: increment for "lateral" window shift across all data
   """
-  labels = preprocessing.labels_from_timestamps(timestamps, sr, length)
+  labels = labels_from_timestamps(timestamps, sr, length)
   corrupt_indeces = get_corrupt_indeces(label_file)
   labels[corrupt_indeces] = 2
-  windowed_raw = preprocessing.label_epochs(labels, window_size, window_step, max)
+  windowed_raw = label_epochs(labels, window_size, window_step, max)
   windowed_refined = [window for window in windowed_raw if window != 2]
   return windowed_refined, windowed_raw
 
@@ -244,7 +262,7 @@ def lbl_wo_corrupt(label_file, timestamps, sr, length, window_size, window_step)
   for i in range(number_of_subjects):
     subject_data = placeholder[i]
     channel_of_interest = subject_data[:,sensor]
-    epoched = preprocessing.epoch(channel_of_interest, window_size, window_step)
+    epoched = epoch(channel_of_interest, window_size, window_step)
 
     for j in range(len(epoched)):
       subject_epochs.append(epoched[j])
