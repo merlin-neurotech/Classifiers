@@ -49,7 +49,7 @@ def get_corrupt(data):
         return corrupt
 
 
-def get_corrupt_indeces(label_file):
+def get_corrupt_indeces(label_file, sr):
     """
     interpolates from start-end timestamps to obtain an array of every index
     which corresponds to a corrupted instance
@@ -60,8 +60,8 @@ def get_corrupt_indeces(label_file):
     filledin = np.array([])
     bad = get_corrupt(label_file)
     for i in range(len(bad)):
-        start = m.floor(bad[i][0]*250)
-        stop = m.floor(bad[i][1]*250)
+        start = m.floor(bad[i][0]*sr)
+        stop = m.floor(bad[i][1]*sr)
         elong = (np.linspace(start, stop, stop-start))
         filledin = np.concatenate((filledin, elong))
     return filledin.astype(int)
@@ -238,7 +238,7 @@ def lbl_wo_corrupt(label_file, timestamps, sr, length, window_size, window_step)
        window_step: increment for "lateral" window shift across all data
     """
     labels = labels_from_timestamps(timestamps, sr, length)
-    corrupt_indeces = get_corrupt_indeces(label_file)
+    corrupt_indeces = get_corrupt_indeces(label_file, sr)
     labels[corrupt_indeces] = 2
     windowed_raw = label_epochs(labels, window_size, window_step, max)
     windowed_refined = [window for window in windowed_raw if window != 2]
@@ -270,10 +270,10 @@ def epoch_subject_data(dataset, window_size, window_step, sensor):
         for j in range(len(epoched)):
             subject_epochs.append(epoched[j])
 
-    return subject_epochs
+    return np.array(subject_epochs)
 
 
-def epoch_subject_labels(dataset, labels, label_files, window_size, window_step, mode='default'):
+def epoch_subject_labels(dataset, labels, label_files, sr, window_size, window_step, mode='default'):
     """
     will return the refined labels, raw labels to be used for refining the
     data epochs. takes in the array of subject blink timestamps, NOT individual.
@@ -300,7 +300,7 @@ def epoch_subject_labels(dataset, labels, label_files, window_size, window_step,
         subject_labels = placeholder1[i]
         subject_data = placeholder2[i]
         subject_len = len(subject_data[:,0])
-        refined, raw = lbl_wo_corrupt(label_files[i], subject_labels, 250, subject_len, window_size, window_step)
+        refined, raw = lbl_wo_corrupt(label_files[i], subject_labels, sr, subject_len, window_size, window_step)
 
         for j in range(len(raw)):
             subject_labels_raw.append(raw[j])
@@ -320,4 +320,4 @@ def purify_epochs(epoched_data, raw_epoched_labels):
     takes in the long list of raw epochs and returns only non-corrupt ones
     """
     indeces = np.where(raw_epoched_labels !=2)[0]
-    return [epoched_data[i] for i in indeces]
+    return np.array(epoched_data[indeces])
