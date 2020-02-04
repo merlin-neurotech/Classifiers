@@ -5,17 +5,19 @@
 
 import numpy as np
 from scipy import stats
+import csv
+import math as m
 
 def rowskip(data):
-    """
-    Determines the number of lines to skip as start of csv for EEG data_stim
+      """
+      Determines the number of lines to skip as start of csv for EEG data_stim
 
-    Arguments:
-        data: csv file name of the labels
+      Arguments:
+            data: csv file name of the labels
 
-    Returns:
-        Appropriate value to pass for skiprows in np.loadtxt
-    """
+     Returns:
+            Appropriate value to pass for skiprows in np.loadtxt
+      """
     with open(data, newline='') as f:
         reader = csv.reader(f)
         row1 = next(reader)
@@ -217,25 +219,24 @@ def epoch_and_label(data, sampling_rate, timestamps, window_size, inter_window_i
 
 
 def lbl_wo_corrupt(label_file, timestamps, sr, length, window_size, window_step):
-    """
-    PREAMBLE: takes in label_file to determine corrupt instances,
-    uses get_corrupt_indeces function to return every index of a
-    corrupt channel, use label_from_timestamps function to elongate
-    list of provided timestamps for blinks, make every instance which
-    is corrupt a 2, containment to obtain labelled window, get rid of
-    windows with title 2
-    returns: all non-corrupt windowed-labels, all windowed labels (to be used
-    to get rid of corrupt epochs later)
+     """
+     PREAMBLE: takes in label_file to determine corrupt instances,
+     uses get_corrupt_indeces function to return every index of a
+     corrupt channel, use label_from_timestamps function to elongate
+     list of provided timestamps for blinks, make every instance which
+     is corrupt a 2, containment to obtain labelled window, get rid of
+     windows with title 2
+     returns: all non-corrupt windowed-labels, all windowed labels (to be used
+     to get rid of corrupt epochs later)
 
-    Arguments:
-        label_file: filename for csv of labels
-        timestamps: csv of timestamps
-        sr: sampling rate
-        length: length of eeg channel (i.e number of datum in an eeg channel)
-        window_size: number of data points in training input elements
-        window_step: increment for "lateral" window shift across all data
-    """
-
+     Arguments:
+           label_file: filename for csv of labels
+           timestamps: csv of timestamps
+           sr: sampling rate
+           length: length of eeg channel (i.e number of datum in an eeg channel)
+           window_size: number of data points in training input elements
+           window_step: increment for "lateral" window shift across all data
+     """
     labels = labels_from_timestamps(timestamps, sr, length)
     corrupt_indeces = get_corrupt_indeces(label_file)
     labels[corrupt_indeces] = 2
@@ -273,21 +274,21 @@ def epoch_subject_data(dataset, window_size, window_step, sensor):
 
 
 def epoch_subject_labels(dataset, labels, label_files, window_size, window_step, mode='default'):
-    """
-    will return the refined labels, raw labels to be used for refining the
-    data epochs. takes in the array of subject blink timestamps, NOT individual.
+     """
+     will return the refined labels, raw labels to be used for refining the
+     data epochs. takes in the array of subject blink timestamps, NOT individual.
 
-    Arguments:
-       dataset: array of eeg data for subjects.  used for determining length parameter in labelling function
-       labels: array of timstamps
-       label_files: label csv filenames
-       mode: 'default' returns raw and refined labelled windows (ie. including corrupt
-       vs no corrupt channels). 'only_raw' returns every possible label window regardless
-       of corruption
+     Arguments:
+           dataset: array of eeg data for subjects.  used for determining length parameter in labelling function
+           labels: array of timstamps
+           label_files: label csv filenames
+           mode: 'default' returns raw and refined labelled windows (ie. including corrupt
+           vs no corrupt channels). 'only_raw' returns every possible label window regardless
+           of corruption
 
     Returns:
-       raw or refined (no corrupt) labelled windows
-    """
+           raw or refined (no corrupt) labelled windows
+     """
     number_of_subjects = len(labels)
     placeholder1 = np.array(labels)
     placeholder2 = np.array(dataset)  #need this for the length parameter
