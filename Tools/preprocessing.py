@@ -321,3 +321,37 @@ def purify_epochs(epoched_data, raw_epoched_labels):
     """
     indeces = np.where(raw_epoched_labels !=2)[0]
     return np.array(epoched_data[indeces])
+
+
+def compute_signal_std(signal, corrupt_intervals=None, sampling_rate=1):
+    """
+    Computes and returns the standard deviation of a signal channel-wise (while avoiding corrupt intervals)
+    
+    Arguments:
+        signal: signal of shape [n_samples, n_channels]
+        corrupt_intervals: an array of 2-tuples indicating the start and end time of the corrupt interval (units of time)
+        sampling_rate: the sampling rate in units of samples/unit of time
+        
+
+    Returns:
+        standard deviation of signal (computed per channel) of shape [1, n_channels]
+    """
+    
+    # convert signal into numpy array for use of its indexing features
+    signal = np.array(signal)
+    
+    if corrupt_intervals is not None:
+        #convert corrupt_indices from units of time to # of samples 
+        corrupt_intervals = [(int(cor_start * sampling_rate), int(cor_end * sampling_rate)) for cor_start, cor_end in corrupt_intervals]
+        
+        #find all indices to keep
+        good_indices = []
+
+        # for each index in the signal, check if it is contained in any of the corrupt intervals to
+        for ind in range(len(signal)):
+            good_indices.append(not np.any([ind in range(cor_start, cor_end) for cor_start, cor_end in corrupt_intervals]))
+    
+        signal = signal[good_indices]
+
+    # compute and return std on non_corrupt parts of signal
+    return np.std(signal, axis=0, dtype=np.float32) 
