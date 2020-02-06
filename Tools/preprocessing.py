@@ -355,3 +355,31 @@ def compute_signal_std(signal, corrupt_intervals=None, sampling_rate=1):
 
     # compute and return std on non_corrupt parts of signal
     return np.std(signal, axis=0, dtype=np.float32) 
+
+
+def split_corrupt_signal(signal, corrupt_intervals, sampling_rate=1):
+    """
+    Splits a signal with corrupt intervals and returns array of signals with the corrupt intervals filtered out.
+    This is useful for treating each non_corrupt segment as a seperate signal to ensure continuity within a single signal. 
+    
+    Arguments:
+        signal: signal of shape [n_samples, n_channels]
+        corrupt_intervals: an array of 2-tuples indicating the start and end time of the corrupt interval (units of time)
+        sampling_rate: the sampling rate in units of samples/unit of time
+        
+
+    Returns:
+        array of non_corrupt signals of shape [n_signal, n_samples, n_channels]
+    """
+    
+    #convert corrupt_indices from units of time and flatten into single array
+    corrupt_intervals = np.array(corrupt_intervals * sampling_rate).flatten()
+
+        
+    # convert signal into numpy array for use with library
+    signal = np.array(signal)
+    
+    #split signal on each cor_start or cor_end and discard the regions in between cor_start and cor_end
+    signals = np.split(signal, corrupt_intervals)[::2]
+    
+    return signals
