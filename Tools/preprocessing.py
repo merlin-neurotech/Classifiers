@@ -1,10 +1,12 @@
-"""Module containing functions for the preparation of EEG data for use with ML models.
+"""Module containing functions for the preparation of EEG data for use with ML models and general BCI purposes.
 
     Usage Example: [TODO]
 """
 
 import numpy as np
 from scipy import stats
+import biosppy.signals as bsig
+
 import csv
 import math as m
 
@@ -383,3 +385,83 @@ def split_corrupt_signal(signal, corrupt_intervals, sampling_rate=1):
     signals = np.split(signal, corrupt_intervals)[::2]
     
     return signals
+
+
+def epoch_band_features(epoch, sampling_rate, bands='all'):
+    """
+    Computes power of EEG frequency bands over entire epoch channel-wise.
+
+    Arguments:
+        epoch: a single epoch of shape [n_samples, n_channels]
+        sampling_rate: the sampling rate of the signal in units of samples/unit of time
+        bands: the requested frequency bands to get power features for.
+            'all': all of ['theta', 'alpha_low', 'alpha_high', 'beta', 'gamma']
+            otherwise an array of strings of the desired bands.
+
+    Returns:
+        a dictionary of arrays of shape [1, n_channels] containing the power features over each band per channel.
+    """
+
+    if bands == 'all':
+        bands = ['theta', 'alpha_low', 'alpha_high', 'beta', 'gamma']
+
+
+    # computes length of epoch to compute band power features over entire epoch
+    w_size = np.array(epoch).shape[0] / sampling_rate
+
+    # compute power for each band
+    _, theta, alpha_low, alpha_high, beta, gamma = bsig.eeg.get_power_features(epoch, sampling_rate=sampling_rate, size=w_size, overlap=0)
+
+    # initialize return dict
+    band_features = {'theta': theta, 
+                    'alpha_low': alpha_low,
+                    'alpha_high': alpha_high,
+                    'beta': beta,
+                    'gamma': gamma }
+
+    # return only requested bands (intersection of bands available and bands requested)                 
+    band_features = {band: band_features[band] for band in bands & band_features.keys()}
+
+    return band_features
+
+def threshold_clf(features, threshold, clf_consolidator='any'):
+  """
+    Classifies given features based on the given threshold.
+    
+    Arguments:
+        features: an array of numerical features to classify
+        threshold: the threshold for classification. A single number, or an array corresponding to `features` for element-wise comparison.
+        clf_consolidator: method of consolidating element-wise comparisons with threshold into a single classification.
+            'any': positive class if any features passes the threshold
+            'all': positive class only if all features pass threshold
+            'sum': a count of the number of features which pass the threshold
+            function: a custom function which takes in an array of booleans and returns a consolidated classification
+    
+    Returns:
+        A classification for the given features. Return type `clf_consolidator`.
+  """
+
+  try:
+    label = np.array(features) > np.array(threshold)
+  except ValueError as v_err:
+    print("Couldn't perform comparison between features and thresholds. Try a different format for the threshold.")
+    raise v_err
+  
+
+  if clf_consolidator == 'any': 
+    label = np.any(label)
+
+  elif clf_consolidator == 'all':
+    label = np.all(label)
+
+  elif clf_consolidator == 'sum':
+    label = np.sum(label)
+
+  elif callable(clf_consolidator):
+    try:
+      label = clf_consolidator(label)
+    except TypeError as t_err:
+      print("Couldn't use clf_consolidator function to consolidate classification")
+      raise t_err
+  
+  return label
