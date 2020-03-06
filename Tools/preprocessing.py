@@ -389,7 +389,7 @@ def split_corrupt_signal(signal, corrupt_intervals, sampling_rate=1):
 
 def epoch_band_features(epoch, sampling_rate, bands='all'):
     """
-    Computes power of EEG frequency bands over entire epoch channel-wise.
+    Computes power features of EEG frequency bands over entire epoch channel-wise.
 
     Arguments:
         epoch: a single epoch of shape [n_samples, n_channels]
@@ -426,7 +426,7 @@ def epoch_band_features(epoch, sampling_rate, bands='all'):
 
 def threshold_clf(features, threshold, clf_consolidator='any'):
   """
-    Classifies given features based on the given threshold.
+    Classifies given features based on a given threshold.
     
     Arguments:
         features: an array of numerical features to classify
