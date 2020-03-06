@@ -65,7 +65,7 @@ The most balanced model achieved the following results on the training set:
 | --- | --- | --- | --- | --- |
 | No-blink | 0.99 | 0.98 | 0.99 | 16503 | 
 | Blink | 0.91 | 0.95 | 0.93 | 2629 | 
-| 
+| |
 | micro avg | 0.98 | 0.98  | 0.98 | 19132 | 
 | macro avg | 0.95 | 0.97 | 0.96 | 19132 | 
 | weighted avg | 0.98 | 0.98 | 0.98 | 19132 | 
@@ -77,7 +77,7 @@ And the following results on the testing set:
 | --- | --- | --- | --- | --- |
 | No-blink | 0.97 | 0.97 | 0.97 | 853 | 
 | Blink | 0.82 | 0.82 | 0.82 | 154 | 
-| 
+| |
 | micro avg | 0.95 | 0.95  | 0.95 | 1007 | 
 | macro avg | 0.90 | 0.90 | 0.90 | 1007 | 
 | weighted avg | 0.95 | 0.95 | 0.95 | 1007 | 
