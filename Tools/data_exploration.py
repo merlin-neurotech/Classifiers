@@ -108,37 +108,46 @@ def stim_triggered_average(signal, sr, timestamps, duration_before, duration_aft
         sta: average signal characteristic around event (stim-triggered-average).
         st_std: standard deviation of stim-triggered signal with respect to `relative_time`.
         figax: tuple of matplotlib figure and axis objects of plot.
-        
-
     """
     
+    # compute indices of of the stimulus event using the given timestamps 
     stim_indices = (timestamps*sr).astype(int)
 
+    # compute number of indices to go forward and backward
     ind_before = int(sr * duration_before)
     ind_after = int(sr * duration_after)
 
-    stim_neighbours = np.array([signal[i-ind_before:i+ind_after] for i in stim_indices])
-    sta = np.mean(stim_neighbours, axis=0)
-    st_std = np.std(stim_neighbours, axis=0)
+    # extract "sub-signals" aligned and centered on stimulus event for computation of stim-triggered average and standard deviation
+    stim_signals = np.array([signal[i-ind_before:i+ind_after] for i in stim_indices])
 
+    # compute stim-triggered average `sta` and stim-trigerred standard deviation `st_std`
+    sta = np.mean(stim_signals, axis=0)
+    st_std = np.std(stim_signals, axis=0)
+
+    # generate time space relative to stimulus event (event occurs at t=0) for plotting. 
     relative_time = np.linspace(-duration_before, duration_after, len(sta))
 
-
-
+    # PLOTTING
     fig, ax = plt.subplots(1)
+
+    # each channel is handled seperately so that the resultant plot is clean and interpretable. 
     for ch in range(sta.shape[1]):
         sta_line, = ax.plot(relative_time, sta[:, ch])
         if channels is not None:
             sta_line.set_label(channels[ch])
         if plot_range:
             color = sta_line.get_color()
+            # compute the upper and lower bounds on the stim_triggered average using the stim_triggered standard deviation
+            # `std_multiplier` controls sensitivity to deviation in the plot
             upper = sta[:, ch] + std_multiplier * st_std[:, ch]
             lower = sta[:, ch] - std_multiplier * st_std[:, ch]
 
             ax.plot(relative_time, upper, ls='--', c=color)
             ax.plot(relative_time, lower, ls='--', c=color)
+
             ax.fill_between(relative_time, lower, upper, facecolor=color, alpha=0.25)
 
+    # indicate where stimulus occurs
     ax.axvline(0, c='violet', ls='--', lw=2, label='stim')
 
     ax.set_xlabel('Time Relative to Stim')
