@@ -87,7 +87,8 @@ def plot_grid(signals, num_signals=None, sr=1,cols=4, fig_size=(10,6),
     return fig, axes
 
 
-def stim_triggered_average(signal, sr, timestamps, duration_before, duration_after,  plot=False):
+def stim_triggered_average(signal, sr, timestamps, duration_before, duration_after, 
+                           channels=None, std_multiplier=1, plot_range=True):
     """
     Inspired by the computational neuroscience concept of a spike-triggered average,
     this function computes the average signal characteristic around known events.
@@ -98,30 +99,56 @@ def stim_triggered_average(signal, sr, timestamps, duration_before, duration_aft
         timestamps: array of floats containing the timestamps for each event (units must match sampling_rate).
         duration_before: the duration to be considered before each event.
         duration_after: the duration to be considered after each event.
+        channels: list of channel names(str) corresponding to each channel in `signal`. used for plotting legend.
+        std_multiplier(float): multiplier of standard deviation for computing upper and lower bounds of signal.
+        plot_range: whether to also plot the std-based range for the stim-triggered average.
 
     Returns:
-        stim_triggered_average: average signal characteristic around event
-        relative_time: relative time of each sample in stim_triggered_average with respect to event 
+        relative_time: relative time of each sample in `sta` with respect to event.
+        sta: average signal characteristic around event (stim-triggered-average).
+        st_std: standard deviation of stim-triggered signal with respect to `relative_time`.
+        figax: tuple of matplotlib figure and axis objects of plot.
+        
 
     """
     
-    
     stim_indices = (timestamps*sr).astype(int)
-    
+
     ind_before = int(sr * duration_before)
     ind_after = int(sr * duration_after)
-    
-    stim_triggered_average = np.mean([signal[i-ind_before:i+ind_after] for i in stim_indices], axis=0)
-    stim_triggered_average = np.mean([signal[i-ind_before:i+ind_after] for i in stim_indices], axis=0)
+
+    stim_neighbours = np.array([signal[i-ind_before:i+ind_after] for i in stim_indices])
+    sta = np.mean(stim_neighbours, axis=0)
+    st_std = np.std(stim_neighbours, axis=0)
+
+    relative_time = np.linspace(-duration_before, duration_after, len(sta))
+
+
+
+    fig, ax = plt.subplots(1)
+    for ch in range(sta.shape[1]):
+        sta_line, = ax.plot(relative_time, sta[:, ch])
+        if channels is not None:
+            sta_line.set_label(channels[ch])
+        if plot_range:
+            color = sta_line.get_color()
+            upper = sta[:, ch] + std_multiplier * st_std[:, ch]
+            lower = sta[:, ch] - std_multiplier * st_std[:, ch]
+
+            ax.plot(relative_time, upper, ls='--', c=color)
+            ax.plot(relative_time, lower, ls='--', c=color)
+            ax.fill_between(relative_time, lower, upper, facecolor=color, alpha=0.25)
+
+    ax.axvline(0, c='violet', ls='--', lw=2, label='stim')
+
+    ax.set_xlabel('Time Relative to Stim')
+    ax.set_title('Stimulus-Triggerred Average')
+
+    ax.legend()
 
     
-    relative_time = np.linspace(-duration_before, duration_after, len(stim_triggered_average))
-    
-    if plot:
-        plt.plot(relative_time, stim_triggered_average)
-        plt.axvline(0, c='violet', ls='--', lw=2)
-    
-    return stim_triggered_average, relative_time
+    return relative_time, sta, st_std, (fig, ax)
+
 
 
 def plot_PCA(epochs, sr=1, n_components=None, return_PCA=False, PCA_kwargs={}, plot_grid_kwargs={}):
