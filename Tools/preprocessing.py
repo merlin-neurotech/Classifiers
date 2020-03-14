@@ -6,8 +6,6 @@
 import numpy as np
 from scipy import stats
 import biosppy.signals as bsig
-import csv
-import math as m
 
 
 def epoch(signal, window_size, inter_window_interval):
