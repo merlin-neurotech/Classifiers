@@ -58,19 +58,34 @@ def band_power_calibrator(inlet, channels, device, bands=['alpha_high'], percent
     return clb_info
 
 
-def band_power_transformer(buffer, clb_info=None, bands=['alpha_high'], epoch_len=250, channels=['AF7', 'AF8'], device='muse'):
-    '''gets some some choice of channels, epochs on some length, get power features in alpha_high band'''
+def band_power_transformer(buffer, clb_info, channels, device, bands=['alpha_high'], epoch_len=250):
+    '''
+    Transformer for `generic_BCI.BCI` which chooses channels, epochs, and gets power features on some choice of bands.
+
+    Arguments:
+        buffer: array of shape [n_samples, n_channels] of most recent streamed data.
+        clb_info: not used. included for compatibility with generic_BCI.BCI
+        bands: the frequency bands to get power features for.
+            'all': all of ['theta', 'alpha_low', 'alpha_high', 'beta', 'gamma']
+            otherwise a list of strings of the desired bands.
+        epoch_len(float): the duration of data to classify on in seconds.
+        channels: list of strings of the channels to use.
+        device:(str): device name for use by `classification_tools`.
+
+    Returns:
+        transformed_signal: array of shape [n_bands, n_channels] of the channel-wise power of each band over the epoch.
+    '''
 
 
-    sr = DEVICE_SAMPLING_RATE['muse']
+    sr = DEVICE_SAMPLING_RATE[device] # get device sampling rate
 
     # get the latest epoch_len samples from the buffer
-    transformed_signal = np.array(buffer[-epoch_len:, :])
+    transformed_signal = np.array(buffer[-int(epoch_len*sr):, :])
 
     # get the selected channels
     transformed_signal = get_channels(transformed_signal, channels, device)
 
-
+    # compute band_features on signal
     transformed_signal = np.squeeze(epoch_band_features(transformed_signal, sr, bands=bands, return_dict=False))
 
-    return transformed_signal # return alpha_high power
+    return transformed_signal
