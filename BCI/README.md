@@ -1,0 +1,1 @@
+Modular code for implementing brain-computer interfaces with data streams from "brain-sensing" headsets.
