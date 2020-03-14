@@ -4,7 +4,7 @@ from Tools.classification_tools import get_channels, softmax_predict, encode_ohe
 import numpy as np
 import time
 
-def band_power_calibrator(inlet, channels, device, bands=['alpha_high'], percentile=70,
+def band_power_calibrator(inlet, channels, device, bands=['alpha_high'], percentile=50,
                           recording_length=10, epoch_len=1, inter_window_interval=0.2):
     '''
     Calibrator for `generic_BCI.BCI` which computes a given `percentile` for the power of each frequency band
@@ -52,7 +52,7 @@ def band_power_calibrator(inlet, channels, device, bands=['alpha_high'], percent
     clb_info = np.squeeze(np.percentile(band_power, percentile, axis=0))
 
     print(f'\nComputed the following power percentiles: \n{clb_info}')
-    input("Calibration complete. Press Enter to start BCI...")
+    input("\nCalibration complete. Press Enter to start BCI...")
 
 
     return clb_info
