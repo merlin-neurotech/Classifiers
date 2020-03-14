@@ -58,19 +58,19 @@ def band_power_calibrator(inlet, channels, device, bands=['alpha_high'], percent
     return clb_info
 
 
-def band_power_transformer(buffer, clb_info, channels, device, bands=['alpha_high'], epoch_len=250):
+def band_power_transformer(buffer, clb_info, channels, device, bands=['alpha_high'], epoch_len=1):
     '''
     Transformer for `generic_BCI.BCI` which chooses channels, epochs, and gets power features on some choice of bands.
 
     Arguments:
         buffer: array of shape [n_samples, n_channels] of most recent streamed data.
         clb_info: not used. included for compatibility with generic_BCI.BCI
+        channels: list of strings of the channels to use.
+        device:(str): device name for use by `classification_tools`.
         bands: the frequency bands to get power features for.
             'all': all of ['theta', 'alpha_low', 'alpha_high', 'beta', 'gamma']
             otherwise a list of strings of the desired bands.
         epoch_len(float): the duration of data to classify on in seconds.
-        channels: list of strings of the channels to use.
-        device:(str): device name for use by `classification_tools`.
 
     Returns:
         transformed_signal: array of shape [n_bands, n_channels] of the channel-wise power of each band over the epoch.
