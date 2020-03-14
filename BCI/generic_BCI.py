@@ -2,7 +2,7 @@ from pylsl import StreamInlet, resolve_byprop
 import numpy as np
 
 
-def BCI(inlet, classifier, transformer=None, action=print, calibrator=None, buffer_length=1024, n_channels=5):
+def BCI(inlet, classifier, transformer=None, action=print, calibrator=None, buffer_length=1024):
     '''
     Implements a generic Brain-Computer Interface.
 
@@ -18,7 +18,6 @@ def BCI(inlet, classifier, transformer=None, action=print, calibrator=None, buff
         calibrator: a function which is run on startup to perform calibration using `inlet`,
             returns `calibration_info` which is used by `classifier` and `transformer`.
         buffer_length(int): the length of the `buffer`; specifies the number of samples of the signal to keep for classification.
-        n_channels(int): the number of channels in the signal.
     '''
 
     inlet.open_stream()
@@ -28,11 +27,12 @@ def BCI(inlet, classifier, transformer=None, action=print, calibrator=None, buff
         calibration_info = calibrator(inlet)
     else: calibration_info = None
 
-    buffer = np.empty((0, n_channels)) # TODO: n_channels can be found from `inlet`. perhaps remove need for it to be passed in as a param.
+    n_channels = inlet.channel_count # get number of available channels in inlet
+    buffer = np.empty((0, n_channels))
 
     running = True # currently constantly running. TODO: implement ending condition?
     while running:
-        chunk = inlet.pull_chunk()[0]
+        chunk, _ = inlet.pull_chunk(max_samples=buffer_length)
         if np.size(chunk) != 0: # Check if new data available
             buffer = np.append(buffer, np.array(chunk), axis=0)
 
