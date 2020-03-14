@@ -2,7 +2,7 @@ from pylsl import StreamInlet, resolve_byprop
 import numpy as np
 
 
-def BCI(inlet, classifier, transformer=None, action=print, buffer_length=1024, n_channels=5):
+def BCI(inlet, classifier, transformer=None, action=print, calibrator=None, buffer_length=1024, n_channels=5):
     '''
     Implements a generic Brain-Computer Interface.
 
@@ -15,11 +15,18 @@ def BCI(inlet, classifier, transformer=None, action=print, buffer_length=1024, n
         classifier: a function which performs classification on the most recent data (transformed as needed). returns class.
         transformer: function which takes in the most recent data (`buffer`) and returns the transformed input the classifer expects.
         action: a function which takes in the classification, and performs some action.
+        calibrator: a function which is run on startup to perform calibration using `inlet`,
+            returns `calibration_info` which is used by `classifier` and `transformer`.
         buffer_length(int): the length of the `buffer`; specifies the number of samples of the signal to keep for classification.
         n_channels(int): the number of channels in the signal.
     '''
 
     inlet.open_stream()
+
+    # run calibrator to get `calibration_info` which is used when perfroming transformation and classifiaction
+    if calibrator is not None:
+        calibration_info = calibrator(inlet)
+    else: calibration_info = None
 
     buffer = np.empty((0, n_channels)) # TODO: n_channels can be found from `inlet`. perhaps remove need for it to be passed in as a param.
 
@@ -29,17 +36,32 @@ def BCI(inlet, classifier, transformer=None, action=print, buffer_length=1024, n
         if np.size(chunk) != 0: # Check if new data available
             buffer = np.append(buffer, np.array(chunk), axis=0)
 
-            if buffer.shape[0] > buffer_length: 
+            if buffer.shape[0] > buffer_length:
                 buffer = buffer[-buffer_length:] # clip to buffer_length
 
                 # transform buffer for classification
                 if transformer is not None:
-                    clf_input = transformer(buffer) 
+                    try:
+                        clf_input = transformer(buffer, calibration_info)
+                    except TypeError as type_err:
+                        print("""Got TypeError when calling transformer.
+                        Make sure your transformer is a function which accepts buffer, and calibration_info (output of calibrator) as inputs""")
+                        print(type_err)
                 else:
                     clf_input = buffer
 
-                brain_state = classifier(clf_input) # perform classification
+                try:
+                    brain_state = classifier(clf_input, calibration_info) # perform classification
+                except TypeError as type_err:
+                    print("""Got TypeError when calling classifier.
+                    Make sure your classifier is a function which accepts clf_input (output of transformer), and calibration_info (output of calibrator) as inputs""")
+                    print(type_err)
 
-                action(brain_state) # run action based on classification
+                try:
+                    action(brain_state) # run action based on classification
+                except TypeError as type_err:
+                    print("""Got TypeError when calling action.
+                    Make sure your action is a function which accepts brain_state (output of classifer) as an input""")
+                    print(type_err)
 
     inlet.close_stream()
