@@ -44,24 +44,29 @@ def BCI(inlet, classifier, transformer=None, action=print, calibrator=None, buff
                     try:
                         clf_input = transformer(buffer, calibration_info)
                     except TypeError as type_err:
-                        print("""Got TypeError when calling transformer.
-                        Make sure your transformer is a function which accepts buffer, and calibration_info (output of calibrator) as inputs""")
+                        print(("Got TypeError when calling transformer.\n"
+                            "Make sure your transformer is a function which accepts buffer, \n"
+							"and calibration_info (output of calibrator) as inputs"))
                         print(type_err)
+                        break
                 else:
                     clf_input = buffer
 
                 try:
                     brain_state = classifier(clf_input, calibration_info) # perform classification
                 except TypeError as type_err:
-                    print("""Got TypeError when calling classifier.
-                    Make sure your classifier is a function which accepts clf_input (output of transformer), and calibration_info (output of calibrator) as inputs""")
+                    print(("Got TypeError when calling classifier. \n"
+                        "Make sure your classifier is a function which accepts clf_input (output of transformer), \n"
+						"and calibration_info (output of calibrator) as inputs"))
                     print(type_err)
+                    break
 
                 try:
                     action(brain_state) # run action based on classification
                 except TypeError as type_err:
-                    print("""Got TypeError when calling action.
-                    Make sure your action is a function which accepts brain_state (output of classifer) as an input""")
+                    print(("Got TypeError when calling action. \n"
+                        "Make sure your action is a function which accepts brain_state (output of classifer) as an input"))
                     print(type_err)
+                    break
 
     inlet.close_stream()
