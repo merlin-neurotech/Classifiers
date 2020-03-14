@@ -222,7 +222,7 @@ def split_corrupt_signal(signal, corrupt_intervals, sampling_rate=1):
     return signals
 
 
-def epoch_band_features(epoch, sampling_rate, bands='all'):
+def epoch_band_features(epoch, sampling_rate, bands='all', return_dict=True):
     """
     Computes power features of EEG frequency bands over entire epoch channel-wise.
 
@@ -232,6 +232,8 @@ def epoch_band_features(epoch, sampling_rate, bands='all'):
         bands: the requested frequency bands to get power features for.
             'all': all of ['theta', 'alpha_low', 'alpha_high', 'beta', 'gamma']
             otherwise an array of strings of the desired bands.
+        return_dict(bool): returns band_features in the form of a dictionary (keys frequency bands) if True,
+            else returns numpy array of band_features in order of `bands` (if applicables)
 
     Returns:
         a dictionary of arrays of shape [1, n_channels] containing the power features over each band per channel.
@@ -255,9 +257,12 @@ def epoch_band_features(epoch, sampling_rate, bands='all'):
                     'gamma': gamma }
 
     # return only requested bands (intersection of bands available and bands requested)
-    band_features = {band: band_features[band] for band in bands & band_features.keys()}
+    if return_dict: # return in form of dict
+        return_band_features = {band: band_features[band] for band in bands & band_features.keys()}
+    else:
+        return_band_features = np.array([band_features[band] for band in bands & band_features.keys()])
 
-    return band_features
+    return return_band_features
 
 def threshold_clf(features, threshold, clf_consolidator='any'):
   """
