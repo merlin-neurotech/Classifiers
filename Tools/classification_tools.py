@@ -87,5 +87,3 @@ def encode_ohe_prediction(prediction):
 def decode_prediction(prediction, decode_dict):
     '''Returns a more intelligible reading of the prediction based on the given decode_dict'''
     return decode_dict[prediction]
-
-
