@@ -303,11 +303,3 @@ def threshold_clf(features, threshold, clf_consolidator='any'):
       raise t_err
 
   return label
-
-
-def identity(features):
-  '''
-  Returns the input.  Included for integration purposes with BCI function in generic_BCI.
-  Current intended use is for the sigmoid transformer. Wait why did I put this here?
-  '''
-  return features

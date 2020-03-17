@@ -40,6 +40,7 @@ def band_power_calibrator(inlet, channels, device, bands=['alpha_high'], percent
 
 
     recording, _ = inlet.pull_chunk(max_samples=sr*recording_length) # get accumulated data
+    print(recording)
     recording = get_channels(np.array(recording), channels, device=device) # get appropriate channels
 
     # epoch the recording to compute percentile across distribution
@@ -57,7 +58,7 @@ def band_power_calibrator(inlet, channels, device, bands=['alpha_high'], percent
 
     if include_std:
         clb_std = np.std(band_power, axis=0)
-        return clb_info, clb_std
+        return clb_info, np.squeeze(clb_std)
 
     return clb_info
 
@@ -100,9 +101,11 @@ def sigmoid(input, alpha, beta):
   return 1/(1+np.exp(-beta*(input-alpha)))
 
 #DONT KNOW WHAT FORMAT THE CLB_INFO AND CLB_STD IS IN BUT HOPING FLATTEN METHOD WORKS FOR NOW
-def powerSigmoid(epoch, clb_info, clb_std, device, bands=['alpha_high'], epoch_len=1):
+#currently scaling alpha by root two since this thing is biased to noise so we gotta shift mean over?
+#effect of increasing beta steepens sigmoid curve
+def powerSigmoid(epoch, clb_info, clb_std, device, bands=['alpha_high', 'alpha_low'], epoch_len=1):
   '''
-  Returns the output of a sigmoid function centered at calibrator mean and parameterized
+  Returns the output of a sigmoid fubnction centered at calibrator mean and parameterized
   such that the sigmoid(x_mean+std)=0.67 (arbitrary but like in a fibonacci way).  To be
   used as a "classifier" but only for functionality with generic_BCI's sake.
   Assumes the clb info and std are from the calibration
@@ -110,10 +113,16 @@ def powerSigmoid(epoch, clb_info, clb_std, device, bands=['alpha_high'], epoch_l
   sr = DEVICE_SAMPLING_RATE[device]
   power_info = epoch_band_features(epoch, sr, bands=bands, return_dict=False)
   flattened_power_info = power_info.flatten()
+  A = clb_info
+  B = clb_std
 
-  alphas = [clb_info[i] for i in clb_info.flatten()]
-  betas = [clb_std[i] for i in clb_std.flatten()]
+  num_bands = A.shape[0]
+  num_channels = A.shape[1]
 
-  sig_out = [sigmoid(flattened_power_info[i], alphas[i], betas[i]) for i in range(len(flattened_power_info))]
-  
-  return sig_out
+  alphas = A.flatten()
+  betas = [-np.log((1/0.67)-1)/i for i in B.flatten()]
+  #beta_ones = np.ones(len(alphas))
+
+  sig_out = [sigmoid(flattened_power_info[i], np.sqrt(2)*alphas[i], betas[i]) for i in range(len(flattened_power_info))]
+
+  return sig_out.reshape(num_bands, num_channels)
